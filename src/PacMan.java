@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Random;
 import javax.swing.*;
 
-public class PacMan extends JPanel implements ActionListener, KeyListener {
+public class PacMan extends JPanel implements ActionListener, KeyListener, MouseListener {
     class Block{
         int x;
         int y;
@@ -72,7 +72,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    private int rowCnt=21;
+    private int rowCnt=22;
     private int colCnt=19;
     private int tileSize=32;
     private int boardWidth=colCnt*tileSize;
@@ -89,6 +89,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     private Image pacmanLeftImage;
     private Image pacmanRightImage;
     private Image pacmanClosedImage;
+
+    private Image pauseImage;
 
     HashSet<Block> walls;
     HashSet<Block> foods;
@@ -113,9 +115,17 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     int ghostMoveCnt=0;
     final int GHOST_DIRECTION_CHANGE=15;
 
+    float pauseScale = 1.0f;
+    boolean scaleUp = true;
+
+    boolean pauseButtonAnimating = false;
+    int pauseAnimFrame = 0;
+    final int PAUSE_ANIM_FRAMES = 2;
+
     //X = wall, O = skip, P = pac man, ' ' = food
     //Ghosts: b = blue, o = orange, p = pink, r = red
     private String[] tileMap = {
+            "OOOOOOOOOOOOOOOOOOO",
             "XXXXXXXXXXXXXXXXXXX",
             "X        X        X",
             "X XX XXX X XXX XX X",
@@ -145,6 +155,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         setBackground(Color.black);
         addKeyListener(this);
         setFocusable(true);
+        addMouseListener(this);
 
         wallImage=new ImageIcon(getClass().getResource("images/wall.png")).getImage();
         blueGhostImage=new ImageIcon(getClass().getResource("images/blueGhost.png")).getImage();
@@ -157,6 +168,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         pacmanLeftImage=new ImageIcon(getClass().getResource("images/pacmanLeft.png")).getImage();
         pacmanRightImage=new ImageIcon(getClass().getResource("images/pacmanRight.png")).getImage();
         pacmanClosedImage=new ImageIcon(getClass().getResource("images/pacmanClosed.png")).getImage();
+
+        pauseImage=new ImageIcon(getClass().getResource("images/pause.png")).getImage();
 
         loadMap();
         int dirIndex=0;
@@ -253,17 +266,35 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         {
             g.drawString("Game Over: " + String.valueOf(score), tileSize/2, tileSize/2);
         }
-        else if(isPaused)
-        {
-            g.drawString("x" + String.valueOf(lives) + " Score: " + String.valueOf(score), tileSize/2, tileSize/2);
-            g.setFont(new Font("Arial", Font.BOLD, 32));
-            g.drawString("PAUSED", boardWidth/2 - 60, boardHeight/2);
-            g.setFont(new Font("Arial", Font.PLAIN, 16));
-            g.drawString("Press P to continue", boardWidth/2 - 100, boardHeight/2 + 30);
-        }
         else
         {
             g.drawString("x" + String.valueOf(lives) + " Score: " + String.valueOf(score), tileSize/2, tileSize/2);
+        }
+
+        if(isPaused)
+        {
+            g.setColor(new Color(255, 255, 255, 100));
+
+            int imgW = 200;
+            int imgH = 70;
+            int imgX = (boardWidth - imgW) / 2;
+            int imgY = (boardHeight - imgH) / 2;
+
+            g.drawImage(pauseImage, imgX, imgY, imgW, imgH, null);
+
+            if(pauseButtonAnimating)
+            {
+                g.setColor(new Color(0, 0, 0, 80));
+                g.fillRoundRect(imgX, imgY, imgW, imgH, 12, 12);
+            }
+
+            g.setColor(Color.white);
+            g.setFont(new Font("Arial", Font.PLAIN, 20));
+            String resumeText = "Apasă pe imagine sau P pentru a continua";
+            FontMetrics fm = g.getFontMetrics();
+            int textWidth = fm.stringWidth(resumeText);
+
+            g.drawString(resumeText, (boardWidth - textWidth) / 2, imgY + 70 + 30);
         }
     }
 
@@ -543,8 +574,34 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(!isPaused)
+        if(!isPaused) {
             move();
+            pauseScale=1.0f;
+        }
+        else
+        {
+            if(scaleUp)
+                pauseScale += 0.01f;
+            else
+                pauseScale -= 0.01f;
+
+            if(pauseScale >= 1.1f)
+                scaleUp = false;
+            if(pauseScale <= 0.95f)
+                scaleUp = true;
+        }
+
+        if(pauseButtonAnimating)
+        {
+            pauseAnimFrame++;
+
+            if(pauseAnimFrame >= PAUSE_ANIM_FRAMES)
+            {
+                pauseButtonAnimating=false;
+                isPaused=false;
+            }
+        }
+
         repaint();
         if(gameOver){
             gameLoop.stop();
@@ -562,7 +619,6 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         if(e.getKeyCode() == KeyEvent.VK_P && !gameOver)
         {
             isPaused = !isPaused;
-            return;
         }
 
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
@@ -618,4 +674,39 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         if(!isEating)
             updatePacmanImage();
     }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        int mouseX = e.getX();
+        int mouseY = e.getY();
+
+        int baseW = 200;
+        int baseH = 70;
+
+        int drawW = (int)(baseW * pauseScale);
+        int drawH = (int)(baseH * pauseScale);
+
+        int imgX = (boardWidth - drawW) / 2;
+        int imgY = (boardHeight - drawH) / 2;
+
+        if(isPaused &&
+                mouseX >= imgX && mouseX <= imgX + drawW &&
+                mouseY >= imgY && mouseY <= imgY + drawH)
+        {
+            pauseButtonAnimating = true;
+            pauseAnimFrame = 0;
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {}
+
+    @Override
+    public void mouseReleased(MouseEvent e) {}
+
+    @Override
+    public void mouseEntered(MouseEvent e) {}
+
+    @Override
+    public void mouseExited(MouseEvent e) {}
 }
