@@ -110,6 +110,9 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     int eatFrame=0;
     final int EAT_ANIMATION_SPEED=1;
 
+    int ghostMoveCnt=0;
+    final int GHOST_DIRECTION_CHANGE=15;
+
     //X = wall, O = skip, P = pac man, ' ' = food
     //Ghosts: b = blue, o = orange, p = pink, r = red
     private String[] tileMap = {
@@ -156,9 +159,10 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         pacmanClosedImage=new ImageIcon(getClass().getResource("images/pacmanClosed.png")).getImage();
 
         loadMap();
+        int dirIndex=0;
         for(Block ghost:ghosts){
-            char newDirection=direction[rand.nextInt(4)];
-            ghost.updateDirection(newDirection);
+            ghost.updateDirection(direction[dirIndex%4]);
+            dirIndex++;
         }
         gameLoop=new Timer(50,this);
         gameLoop.start();
@@ -390,17 +394,28 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
             ghost.x+=ghost.velocityX;
             ghost.y+=ghost.velocityY;
+
+            boolean needsNewDirection=false;
+
             for(Block wall:walls)
             {
                 if(collision(ghost, wall) || ghost.x <= 0 || ghost.x+ghost.width >= boardWidth)
                 {
                     ghost.x-=ghost.velocityX;
                     ghost.y-=ghost.velocityY;
-                    char newDirection=direction[rand.nextInt(4)];
-                    ghost.updateDirection(newDirection);
+                    needsNewDirection=true;
+                    break;
                 }
             }
+
+            if(needsNewDirection || (ghostMoveCnt % GHOST_DIRECTION_CHANGE == 0))
+            {
+                char newDirection = getGhostDirection(ghost);
+                ghost.updateDirection(newDirection);
+            }
         }
+
+        ghostMoveCnt++;
 
         Block foodEaten=null;
         for(Block food:foods)
@@ -443,6 +458,75 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             char newDirection=direction[rand.nextInt(4)];
             ghost.updateDirection(newDirection);
         }
+    }
+
+    public char getGhostDirection(Block ghost)
+    {
+        java.util.ArrayList<Character> validDir=new java.util.ArrayList<>();
+        for(char dir:direction) {
+            if ((ghost.direction == 'U' && dir == 'D') ||
+                    (ghost.direction == 'D' && dir == 'U') ||
+                    (ghost.direction == 'L' && dir == 'R') ||
+                    (ghost.direction == 'R' && dir == 'L')) {
+                continue;
+            }
+
+            int testX = ghost.x;
+            int testY = ghost.y;
+
+            if (dir == 'U')
+                testY -= tileSize / 4;
+            else if (dir == 'D')
+                testY += tileSize / 4;
+            else if (dir == 'R')
+                testX += tileSize / 4;
+            else if (dir == 'L')
+                testX -= tileSize / 4;
+
+            Block testBlock = new Block(testX, testY, ghost.width, ghost.height, null);
+
+            boolean canMove = true;
+            for (Block wall : walls) {
+                if (collision(testBlock, wall)) {
+                    canMove = false;
+                    break;
+                }
+            }
+
+            if (canMove && testX > 0 && testX + ghost.width < boardWidth)
+                validDir.add(dir);
+        }
+
+        if(validDir.isEmpty())
+            {
+                if(ghost.direction == 'U') return 'D';
+                if(ghost.direction == 'D') return 'U';
+                if(ghost.direction == 'L') return 'R';
+                if(ghost.direction == 'R') return 'L';
+            }
+
+        if(rand.nextInt(100) < 30 && !validDir.isEmpty())
+            {
+                int dx = pacman.x - ghost.x;
+                int dy = pacman.y - ghost.y;
+
+                if(Math.abs(dx) > Math.abs(dy))
+                {
+                    char preferredDir = dx > 0 ? 'R' : 'L';
+                    if(validDir.contains(preferredDir))
+                    {
+                        return preferredDir;
+                    }
+                }
+                else {
+                    char preferredDir = dy > 0 ? 'D' : 'U';
+                    if (validDir.contains(preferredDir)) {
+                        return preferredDir;
+                    }
+                }
+            }
+
+        return validDir.get(rand.nextInt(validDir.size()));
     }
 
     public void updatePacmanImage() {
