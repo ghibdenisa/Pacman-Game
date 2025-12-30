@@ -120,7 +120,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
 
     boolean pauseButtonAnimating = false;
     int pauseAnimFrame = 0;
-    final int PAUSE_ANIM_FRAMES = 2;
+    final int PAUSE_ANIM_FRAMES = 4;
 
     //X = wall, O = skip, P = pac man, ' ' = food
     //Ghosts: b = blue, o = orange, p = pink, r = red
@@ -262,18 +262,30 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         }
 
         g.setFont(new Font("Arial", Font.PLAIN, 18));
+        int lifeSize=28;
+        int lifeSpacing=3;
+        int lifeX=tileSize/2;
+        int lifeY=tileSize/2-lifeSize+12;
+
+        for(int i=0; i<lives; i++)
+        {
+            g.drawImage(pacmanRightImage, lifeX+i*lifeSize-10, lifeY, lifeSize, lifeSize, null);
+        }
         if(gameOver)
         {
             g.drawString("Game Over: " + String.valueOf(score), tileSize/2, tileSize/2);
         }
         else
         {
-            g.drawString("x" + String.valueOf(lives) + " Score: " + String.valueOf(score), tileSize/2, tileSize/2);
+            int scoreX=lifeX+lives*lifeSize;
+            int scoreY=tileSize/2+6;
+            g.drawString(" Score: " + String.valueOf(score), scoreX, scoreY);
         }
 
         if(isPaused)
         {
-            g.setColor(new Color(255, 255, 255, 100));
+            g.setColor(new Color(0, 0, 0, 150));
+            g.fillRect(0, 0, boardWidth, boardHeight);
 
             int imgW = 200;
             int imgH = 70;
