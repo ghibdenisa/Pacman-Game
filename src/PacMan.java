@@ -113,7 +113,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
     final int EAT_ANIMATION_SPEED=1;
 
     int ghostMoveCnt=0;
-    final int GHOST_DIRECTION_CHANGE=15;
+    final int GHOST_DIRECTION_CHANGE=10;
 
     float pauseScale = 1.0f;
     boolean scaleUp = true;
@@ -431,18 +431,37 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
                 }
                 resetPositions();
             }
-            if(ghost.y==tileSize*9 && ghost.direction!='U' && ghost.direction!='D')
+
+            if(ghost.y==tileSize*9 && (ghost.direction!='L' && ghost.direction!='R'))
             {
-                ghost.updateDirection('U');
+                if(rand.nextInt(100) < 80)
+                    ghost.updateDirection('U');
+                else
+                    ghost.updateDirection('D');
             }
+
             ghost.x+=ghost.velocityX;
             ghost.y+=ghost.velocityY;
+
+            int TUNNEL_Y=tileSize*10;
+
+            if(ghost.y == TUNNEL_Y) {
+                if (ghost.x + ghost.width < 0)
+                    ghost.x = boardWidth;
+                else if (ghost.x > boardWidth)
+                    ghost.x = -ghost.width;
+            }
+
+            if(ghost.y < 0)
+                ghost.y = 0;
+            else if(ghost.y > boardHeight-ghost.height)
+                ghost.y = boardHeight-ghost.height;
 
             boolean needsNewDirection=false;
 
             for(Block wall:walls)
             {
-                if(collision(ghost, wall) || ghost.x <= 0 || ghost.x+ghost.width >= boardWidth)
+                if(collision(ghost, wall))
                 {
                     ghost.x-=ghost.velocityX;
                     ghost.y-=ghost.velocityY;
@@ -536,7 +555,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
                 }
             }
 
-            if (canMove && testX > 0 && testX + ghost.width < boardWidth)
+            if (canMove && testX > -ghost.width && testX < boardWidth+ghost.width)
                 validDir.add(dir);
         }
 
@@ -548,7 +567,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
                 if(ghost.direction == 'R') return 'L';
             }
 
-        if(rand.nextInt(100) < 30 && !validDir.isEmpty())
+        if(rand.nextInt(100) < 45 && !validDir.isEmpty())
             {
                 int dx = pacman.x - ghost.x;
                 int dy = pacman.y - ghost.y;
