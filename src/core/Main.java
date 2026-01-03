@@ -1,3 +1,6 @@
+package core;
+
+import world.Level;
 import javax.swing.JFrame;
 
 public class Main {
@@ -14,7 +17,7 @@ public class Main {
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        PacMan pacmanGame=new PacMan();
+        PacMan pacmanGame=new PacMan(Level.level1());
         frame.add(pacmanGame);
         frame.pack();
         pacmanGame.requestFocus();
