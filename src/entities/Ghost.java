@@ -118,4 +118,27 @@ public class Ghost extends Block {
         return validDir.get(rand.nextInt(validDir.size()));
     }
 
+    @Override
+    public void updateVelocity(){
+        int speed=game.getTileSize();
+        int ghostSpeed=speed/5;
+
+        if(this.direction=='U'){
+            this.velocityX=0;
+            this.velocityY=-ghostSpeed;
+        }
+        else if(this.direction=='D'){
+            this.velocityX=0;
+            this.velocityY=ghostSpeed;
+        }
+        else if(this.direction=='L'){
+            this.velocityX=-ghostSpeed;
+            this.velocityY=0;
+        }
+        else if(this.direction=='R'){
+            this.velocityX=ghostSpeed;
+            this.velocityY=0;
+        }
+    }
+
 }
