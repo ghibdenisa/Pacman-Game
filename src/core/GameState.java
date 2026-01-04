@@ -11,6 +11,7 @@ public class GameState {
     public GameState() {
         reset();
     }
+
     public void reset() {
         score = 0;
         lives = INITIAL_LIVES;

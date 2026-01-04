@@ -49,21 +49,33 @@ public class MapLoader {
                 {
                     Ghost ghost=new Ghost(x, y, tileSize, tileSize, imageLoader.getImage("blueGhost"), game);
                     ghosts.add(ghost);
+
+                    Food food=new Food(x, y, game);
+                    foods.add(food);
                 }
                 else if(tileMapChar=='o')
                 {
                     Ghost ghost=new Ghost(x, y, tileSize, tileSize, imageLoader.getImage("orangeGhost"), game);
                     ghosts.add(ghost);
+
+                    Food food=new Food(x, y, game);
+                    foods.add(food);
                 }
                 else if(tileMapChar=='p')
                 {
                     Ghost ghost=new Ghost(x, y, tileSize, tileSize, imageLoader.getImage("pinkGhost"), game);
                     ghosts.add(ghost);
+
+                    Food food=new Food(x, y, game);
+                    foods.add(food);
                 }
                 else if(tileMapChar=='r')
                 {
                     Ghost ghost=new Ghost(x, y, tileSize, tileSize, imageLoader.getImage("redGhost"), game);
                     ghosts.add(ghost);
+
+                    Food food=new Food(x, y, game);
+                    foods.add(food);
                 }
                 else if(tileMapChar=='P')
                     pacman=new Block(x, y, tileSize, tileSize, imageLoader.getImage("pacmanRight"), game);

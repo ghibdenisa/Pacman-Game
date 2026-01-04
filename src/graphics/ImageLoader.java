@@ -24,6 +24,8 @@ public class ImageLoader {
         images.put("pacmanRight", loadImage("/images/pacmanRight.png"));
         images.put("pacmanClosed", loadImage("/images/pacmanClosed.png"));
         images.put("pause", loadImage("/images/pause.png"));
+        images.put("start", loadImage("/images/start.png"));
+        images.put("PACMAN", loadImage("/images/PACMAN.png"));
     }
 
     private Image loadImage(String path) {

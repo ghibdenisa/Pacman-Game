@@ -70,6 +70,13 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         gameLoop.start();
     }
 
+    public void startGame(){
+        if(!gameLoop.isRunning()){
+            gameLoop.start();
+            this.requestFocusInWindow();
+        }
+    }
+
     public void loadMap(){
         MapLoader.MapData mapData=mapLoader.loadMap(crtLevel);
 

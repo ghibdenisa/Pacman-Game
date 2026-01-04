@@ -17,6 +17,35 @@ public class Level {
         return name;
     }
 
+    public static Level generic()
+    {
+        String[] map={
+                "XXXXXXXXXXXXXXXXXXX",
+                "X        X        X",
+                "X        X        X",
+                "X XXXXX  X  XXXXX X",
+                "X X   X  X  X   X X",
+                "X                 X",
+                "X  XXXX     XXXX  X",
+                "X  X  X     X  X  X",
+                "X  XXXX     XXXX  X",
+                "X                 X",
+                "X        X        X",
+                "XXXX   X r X   XXXX",
+                "X      XbpoX      X",
+                "XXXX   XXXXX   XXXX",
+                "X                 X",
+                "X       XXX       X",
+                "X      X   X      X",
+                "X      X P X      X",
+                "X      X   X      X",
+                "X       XXX       X",
+                "X                 X",
+                "XXXXXXXXXXXXXXXXXXX"
+        };
+        return new Level("world.Generic", map);
+    }
+
     public static Level level1()
     {
         String[] map={
@@ -43,6 +72,6 @@ public class Level {
                 "X                 X",
                 "XXXXXXXXXXXXXXXXXXX"
         };
-        return new Level("world.Level 1", map);
+        return new Level("world.Level1", map);
     }
 }
