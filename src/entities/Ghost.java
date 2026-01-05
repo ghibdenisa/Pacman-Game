@@ -7,7 +7,8 @@ import world.GameBoard;
 public class Ghost extends Block {
     private Random rand;
     private char[] directions={'U','D','L','R'};
-    private final int DIRECTION_CHANGE_INTERVAL=10;
+    private final int DIRECTION_CHANGE_INTERVAL=8;
+    private int moveCounter = 0;
 
     public Ghost(int x, int y, int width, int height, Image image, GameBoard game) {
         super(x, y, width, height, image, game);
@@ -16,63 +17,47 @@ public class Ghost extends Block {
 
     public void move(int tileSize, int boardWidth, int boardHeight)
     {
-        if(this.y==tileSize*9 && (this.direction!='L' && this.direction!='R'))
-        {
-            if(rand.nextInt(100) < 80)
-                updateDirection('U');
-            else
-                updateDirection('D');
-        }
-
         this.x+=this.velocityX;
         this.y+=this.velocityY;
 
-        int TUNNEL_Y=tileSize*10;
+        if (this.x < 0) this.x = 0;
+        if (this.y < 0) this.y = 0;
+        if (this.x > boardWidth - width) this.x = boardWidth - width;
+        if (this.y > boardHeight - height) this.y = boardHeight - height;
 
-        if(this.y == TUNNEL_Y) {
-            if (this.x + this.width < 0)
-                this.x = boardWidth;
-            else if (this.x > boardWidth)
-                this.x = -this.width;
-        }
+        moveCounter++;
+    }
 
-        if(this.y < tileSize)
-            this.y=tileSize;
-        if(this.y > boardHeight-this.height)
-            this.y = boardHeight-this.height;
+    public boolean isNearCenterOfTile() {
+        int tileSize = game.getTileSize();
+        return Math.abs((x % tileSize) - tileSize / 2) < 3 &&
+                Math.abs((y % tileSize) - tileSize / 2) < 3;
     }
 
     public boolean needsNewDirection(int ghostMoveCnt){
         return ghostMoveCnt%DIRECTION_CHANGE_INTERVAL==0;
     }
 
-    public char chooseDirection(Block pacman, int boardWidth){
+    public char chooseDirection(Block pacman, int boardWidth, int boardHeight){
         ArrayList<Character> validDir=new ArrayList<>();
+        int tileSize = game.getTileSize();
 
         for(char dir:directions) {
-            if(this.y<=game.getTileSize() && dir=='U')
-                continue;
-            if ((this.direction == 'U' && dir == 'D') ||
-                    (this.direction == 'D' && dir == 'U') ||
-                    (this.direction == 'L' && dir == 'R') ||
-                    (this.direction == 'R' && dir == 'L')) {
+            if (this.direction != ' ' && dir == getOppositeDirection(this.direction)) continue;
+
+            int testX = x;
+            int testY = y;
+
+            if (dir == 'U') testY -= tileSize;
+            else if (dir == 'D') testY += tileSize;
+            else if (dir == 'R') testX += tileSize;
+            else if (dir == 'L') testX -= tileSize;
+
+            if (testX < 0 || testX >= boardWidth || testY < 0 || testY >= boardHeight) {
                 continue;
             }
 
-            int testX = this.x;
-            int testY = this.y;
-            int tileSize=game.getTileSize();
-
-            if (dir == 'U')
-                testY -= tileSize / 4;
-            else if (dir == 'D')
-                testY += tileSize / 4;
-            else if (dir == 'R')
-                testX += tileSize / 4;
-            else if (dir == 'L')
-                testX -= tileSize / 4;
-
-            Block testBlock = new Block(testX, testY, this.width, this.height, null, game);
+            Block testBlock = new Block(testX + 12, testY + 22, 8, 8, null, game);
 
             boolean canMove = true;
             for (Block wall : game.getWalls()) {
@@ -82,62 +67,57 @@ public class Ghost extends Block {
                 }
             }
 
-            if (canMove && testX > -this.width && testX < boardWidth+this.width)
+            if(canMove) {
                 validDir.add(dir);
-        }
-
-        if(validDir.isEmpty())
-        {
-            if(this.direction == 'U') return 'D';
-            if(this.direction == 'D') return 'U';
-            if(this.direction == 'L') return 'R';
-            if(this.direction == 'R') return 'L';
-        }
-
-        if(rand.nextInt(100) < 45 && !validDir.isEmpty())
-        {
-            int dx = pacman.x-this.x;
-            int dy = pacman.y-this.y;
-
-            if(Math.abs(dx) > Math.abs(dy))
-            {
-                char preferredDir = dx > 0 ? 'R' : 'L';
-                if(validDir.contains(preferredDir))
-                {
-                    return preferredDir;
-                }
-            }
-            else {
-                char preferredDir = dy > 0 ? 'D' : 'U';
-                if (validDir.contains(preferredDir)) {
-                    return preferredDir;
-                }
             }
         }
+
+        if (validDir.isEmpty()) {
+            return getOppositeDirection(this.direction);
+        }
+
+        if (rand.nextInt(100) < 60) {
+            return validDir.get(rand.nextInt(validDir.size()));
+        }
+
+        char targetDir = getDirectionTowards(pacman);
+        if (validDir.contains(targetDir)) return targetDir;
 
         return validDir.get(rand.nextInt(validDir.size()));
     }
 
+    private char getOppositeDirection(char dir) {
+        return switch (dir) {
+            case 'U' -> 'D';
+            case 'D' -> 'U';
+            case 'L' -> 'R';
+            case 'R' -> 'L';
+            default -> 'U';
+        };
+    }
+
+    public char getDirectionTowards(Block pacman) {
+        int dx = pacman.x - this.x;
+        int dy = pacman.y - this.y;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return (dx > 0) ? 'R' : 'L';
+        } else {
+            return (dy > 0) ? 'D' : 'U';
+        }
+    }
+
     @Override
     public void updateVelocity(){
-        int speed=game.getTileSize();
-        int ghostSpeed=speed/5;
+        int speed=6;
 
-        if(this.direction=='U'){
-            this.velocityX=0;
-            this.velocityY=-ghostSpeed;
-        }
-        else if(this.direction=='D'){
-            this.velocityX=0;
-            this.velocityY=ghostSpeed;
-        }
-        else if(this.direction=='L'){
-            this.velocityX=-ghostSpeed;
-            this.velocityY=0;
-        }
-        else if(this.direction=='R'){
-            this.velocityX=ghostSpeed;
-            this.velocityY=0;
+        velocityX = 0;
+        velocityY = 0;
+
+        switch (direction) {
+            case 'U' -> velocityY = -speed;
+            case 'D' -> velocityY = speed;
+            case 'L' -> velocityX = -speed;
+            case 'R' -> velocityX = speed;
         }
     }
 

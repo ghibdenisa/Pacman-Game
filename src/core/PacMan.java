@@ -190,15 +190,6 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
             gameLoop.start();
         }
 
-        if(e.getKeyCode()==KeyEvent.VK_UP)
-            pacman.updateDirection('U');
-        else if(e.getKeyCode()==KeyEvent.VK_DOWN)
-            pacman.updateDirection('D');
-        else if(e.getKeyCode()==KeyEvent.VK_LEFT)
-            pacman.updateDirection('L');
-        else if(e.getKeyCode()==KeyEvent.VK_RIGHT)
-            pacman.updateDirection('R');
-
         if(!gameLogic.isEating())
             gameLogic.updatePacmanImage(pacman);
     }

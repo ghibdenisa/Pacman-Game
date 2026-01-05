@@ -22,8 +22,6 @@ public class GameLogic {
     private int eatFrame = 0;
     private final int EAT_ANIMATION_SPEED = 1;
 
-    private int ghostMoveCnt = 0;
-
     public GameLogic(int tileSize, int boardWidth, int boardHeight, GameBoard game, ImageLoader imageLoader) {
         this.tileSize = tileSize;
         this.boardWidth = boardWidth;
@@ -38,6 +36,8 @@ public class GameLogic {
     }
 
     public void move(Block pacman, HashSet<Ghost> ghosts, HashSet<Block> walls, HashSet<Food> foods, GameState gameState) {
+        int speed=8;
+
         if(isEating)
         {
             eatFrame++;
@@ -49,33 +49,42 @@ public class GameLogic {
             }
         }
 
-        if(pendingDirection != ' ' && pendingDirection != pacman.direction)
-        {
-            pendingFrames++;
+        boolean atCenter=(pacman.x % tileSize == 0 && pacman.y % tileSize == 0);
 
+        if(pendingDirection != ' ')
+        {
             if(canMove(pacman, pendingDirection, walls))
             {
-                autoAlign(pacman, pendingDirection);
-                pacman.updateDirection(pendingDirection);
-                if(!isEating)
-                    updatePacmanImage(pacman);
-                //updatePacmanImage();
-                pendingDirection= ' ';
-                pendingFrames=0;
-            }
-            else if(pendingFrames >= MAX_PENDING_FRAMES)
-            {
-                pendingDirection= ' ';
-                pendingFrames=0;
+                boolean isOpposite = (pacman.direction == 'U' && pendingDirection == 'D') ||
+                        (pacman.direction == 'D' && pendingDirection == 'U') ||
+                        (pacman.direction == 'L' && pendingDirection == 'R') ||
+                        (pacman.direction == 'R' && pendingDirection == 'L');
+
+                if (isOpposite || atCenter) {
+                    pacman.x = Math.round((float) pacman.x / tileSize) * tileSize;
+                    pacman.y = Math.round((float) pacman.y / tileSize) * tileSize;
+
+                    pacman.updateDirection(pendingDirection);
+                    pendingDirection = ' ';
+
+//                    if(!isEating) updatePacmanImage(pacman);
+//                    pendingDirection = ' ';
+                }
             }
         }
-        pacman.x+=pacman.velocityX;
-        pacman.y+=pacman.velocityY;
 
-        if(pacman.x+pacman.width < 0)
-            pacman.x=boardWidth;
-        else if(pacman.x > boardWidth)
-            pacman.x=-pacman.width;
+        pacman.velocityX = 0;
+        pacman.velocityY = 0;
+
+        switch (pacman.direction) {
+            case 'U' -> pacman.velocityY = -speed;
+            case 'D' -> pacman.velocityY = speed;
+            case 'L' -> pacman.velocityX = -speed;
+            case 'R' -> pacman.velocityX = speed;
+        }
+
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
 
         for(Block wall:walls)
         {
@@ -83,42 +92,59 @@ public class GameLogic {
             {
                 pacman.x-=pacman.velocityX;
                 pacman.y-=pacman.velocityY;
+
+                pacman.x = Math.round((float) pacman.x / tileSize) * tileSize;
+                pacman.y = Math.round((float) pacman.y / tileSize) * tileSize;
+                pacman.velocityX = 0;
+                pacman.velocityY = 0;
                 break;
             }
         }
 
+        if(pacman.x + pacman.width < 0) pacman.x = boardWidth;
+        else if(pacman.x > boardWidth) pacman.x = -pacman.width;
+
+        if(!isEating) updatePacmanImage(pacman);
+
         for(Ghost ghost:ghosts)
         {
+            ghost.move(tileSize, boardWidth, boardHeight);
+
+            boolean hitWall = false;
+            for (Block wall : walls) {
+                if (game.collision(ghost, wall)) {
+                    ghost.x = Math.round((float) (ghost.x - ghost.velocityX) / tileSize) * tileSize;
+                    ghost.y = Math.round((float) (ghost.y - ghost.velocityY) / tileSize) * tileSize;
+                    hitWall = true;
+                    break;
+                }
+            }
+
+            boolean atIntersection = (ghost.x % tileSize == 0 && ghost.y % tileSize == 0);
+
+            if (hitWall || atIntersection) {
+                ghost.x = Math.round((float) ghost.x / tileSize) * tileSize;
+                ghost.y = Math.round((float) ghost.y / tileSize) * tileSize;
+
+                char newDir = ghost.chooseDirection(pacman, boardWidth, boardHeight);
+                ghost.updateDirection(newDir);
+                ghost.updateVelocity();
+
+                if (newDir != ghost.direction) {
+                    ghost.updateDirection(newDir);
+                    ghost.updateVelocity();
+                }
+            }
+
             if(game.collision(pacman, ghost))
             {
                 gameState.loseLife();
                 if(gameState.isGameOver())
                     return;
                 resetPositions(pacman, ghosts);
-            }
-
-            ghost.move(tileSize, boardWidth, boardHeight);
-
-            boolean needsNewDirection=false;
-            for(Block wall:walls)
-            {
-                if(game.collision(ghost, wall))
-                {
-                    ghost.x-=ghost.velocityX;
-                    ghost.y-=ghost.velocityY;
-                    needsNewDirection=true;
-                    break;
-                }
-            }
-
-            if(needsNewDirection || ghost.needsNewDirection(ghostMoveCnt))
-            {
-                char newDirection = ghost.chooseDirection(pacman, boardWidth);
-                ghost.updateDirection(newDirection);
+                return;
             }
         }
-
-        ghostMoveCnt++;
 
         Food foodEaten=null;
         for(Food food:foods)
@@ -133,13 +159,17 @@ public class GameLogic {
                 pacman.image=imageLoader.getImage("pacmanClosed");
             }
         }
-        foods.remove(foodEaten);
+        if(foodEaten!=null)
+            foods.remove(foodEaten);
     }
 
     public boolean canMove(Block pacman, char dir, HashSet<Block> walls)
     {
         int testX=pacman.x;
         int testY=pacman.y;
+
+        testX = Math.round((float) testX / tileSize) * tileSize;
+        testY = Math.round((float) testY / tileSize) * tileSize;
 
         if(dir=='U')
             testY-=tileSize/4;
@@ -150,7 +180,7 @@ public class GameLogic {
         else if(dir=='L')
             testX+=tileSize/4;
 
-        Block testBlock = new Block(testX, testY, pacman.width, pacman.height, null, game);
+        Block testBlock = new Block(testX + 8, testY + 8, 16, 16, null, game);
 
         for(Block wall:walls)
             if(game.collision(testBlock,wall))
@@ -207,6 +237,7 @@ public class GameLogic {
             ghost.reset();
             char newDirection=directions[rand.nextInt(4)];
             ghost.updateDirection(newDirection);
+            ghost.updateVelocity();
         }
     }
 
