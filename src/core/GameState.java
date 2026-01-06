@@ -34,12 +34,6 @@ public class GameState {
             paused = !paused;
     }
 
-    public void setPaused(boolean paused) {
-        if(!gameOver){
-            this.paused = paused;
-        }
-    }
-
     public int getScore() {
         return score;
     }
@@ -54,13 +48,5 @@ public class GameState {
 
     public boolean isPaused() {
         return paused;
-    }
-
-    public void setLives(int lives) {
-        this.lives = lives;
-    }
-
-    public void setGameOver(boolean gameOver) {
-        this.gameOver = gameOver;
     }
 }

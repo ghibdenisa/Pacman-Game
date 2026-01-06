@@ -7,15 +7,13 @@ import world.GameBoard;
 public class Ghost extends Block {
     private Random rand;
     private char[] directions={'U','D','L','R'};
-    private final int DIRECTION_CHANGE_INTERVAL=8;
-    private int moveCounter = 0;
 
     public Ghost(int x, int y, int width, int height, Image image, GameBoard game) {
         super(x, y, width, height, image, game);
         this.rand=new Random();
     }
 
-    public void move(int tileSize, int boardWidth, int boardHeight)
+    public void move(int boardWidth, int boardHeight)
     {
         this.x+=this.velocityX;
         this.y+=this.velocityY;
@@ -24,19 +22,7 @@ public class Ghost extends Block {
         if (this.y < 0) this.y = 0;
         if (this.x > boardWidth - width) this.x = boardWidth - width;
         if (this.y > boardHeight - height) this.y = boardHeight - height;
-
-        moveCounter++;
-    }
-
-    public boolean isNearCenterOfTile() {
-        int tileSize = game.getTileSize();
-        return Math.abs((x % tileSize) - tileSize / 2) < 3 &&
-                Math.abs((y % tileSize) - tileSize / 2) < 3;
-    }
-
-    public boolean needsNewDirection(int ghostMoveCnt){
-        return ghostMoveCnt%DIRECTION_CHANGE_INTERVAL==0;
-    }
+   }
 
     public char chooseDirection(Block pacman, int boardWidth, int boardHeight){
         ArrayList<Character> validDir=new ArrayList<>();

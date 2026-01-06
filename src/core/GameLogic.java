@@ -15,8 +15,6 @@ public class GameLogic {
     private Random rand;
 
     private char pendingDirection = ' ';
-    private int pendingFrames = 0;
-    private final int MAX_PENDING_FRAMES = 4;
 
     private boolean isEating = false;
     private int eatFrame = 0;
@@ -66,9 +64,6 @@ public class GameLogic {
 
                     pacman.updateDirection(pendingDirection);
                     pendingDirection = ' ';
-
-//                    if(!isEating) updatePacmanImage(pacman);
-//                    pendingDirection = ' ';
                 }
             }
         }
@@ -108,7 +103,7 @@ public class GameLogic {
 
         for(Ghost ghost:ghosts)
         {
-            ghost.move(tileSize, boardWidth, boardHeight);
+            ghost.move(boardWidth, boardHeight);
 
             boolean hitWall = false;
             for (Block wall : walls) {
@@ -189,31 +184,6 @@ public class GameLogic {
         return true;
     }
 
-    public void autoAlign(Block pacman, char newDirection)
-    {
-        boolean changingAxis=
-                ((pacman.direction=='L' || pacman.direction=='R') && (newDirection=='U' || newDirection=='D')) ||
-                        ((pacman.direction=='U' || pacman.direction=='D') && (newDirection=='L' || newDirection=='R'));
-
-        if(changingAxis)
-        {
-            if(newDirection=='U' || newDirection=='D')
-            {
-                int targetX=pacman.x+tileSize/2;
-                int diff=Math.abs(pacman.x-targetX);
-                if(diff<=12)
-                    pacman.x=targetX;
-            }
-            else
-            {
-                int targetY=pacman.y+tileSize/2;
-                int diff=Math.abs(pacman.y-targetY);
-                if(diff<=12)
-                    pacman.y=targetY;
-            }
-        }
-    }
-
     public void updatePacmanImage(Block pacman) {
         if(pacman.direction == 'U')
             pacman.image = imageLoader.getImage("pacmanUp");
@@ -228,8 +198,10 @@ public class GameLogic {
     public void resetPositions(Block pacman, HashSet<Ghost> ghosts)
     {
         pacman.reset();
+        pacman.direction = ' ';
         pacman.velocityX=0;
         pacman.velocityY=0;
+        pacman.image = imageLoader.getImage("pacmanRight");
 
         char[] directions={'U', 'D', 'R', 'L'};
         for(Ghost ghost:ghosts)

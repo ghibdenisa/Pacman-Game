@@ -61,6 +61,10 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         pauseImage=imageLoader.getImage("pause");
 
         loadMap();
+
+        pacman.direction = ' ';
+        pacman.image = imageLoader.getImage("pacmanRight");
+
         int dirIndex=0;
         for(Block ghost:ghosts){
             ghost.updateDirection(direction[dirIndex%4]);
@@ -84,6 +88,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         this.foods=mapData.foods;
         this.ghosts=mapData.ghosts;
         this.pacman=mapData.pacman;
+
+
     }
 
     public void paintComponent(Graphics g)
@@ -150,7 +156,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
             if(pauseAnimFrame >= PAUSE_ANIM_FRAMES)
             {
                 pauseButtonAnimating=false;
-                isPaused=false;
+                gameState.togglePaused();
             }
         }
 
@@ -174,6 +180,15 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
             System.exit(0);
 
+        if(e.getKeyCode()==KeyEvent.VK_R){
+            loadMap();
+            gameLogic.resetPositions(pacman, ghosts);
+            gameState.reset();
+            if(!gameLoop.isRunning())
+                gameLoop.start();
+            return;
+        }
+
         if(e.getKeyCode() == KeyEvent.VK_UP)
             gameLogic.setPendingDirection('U');
         else if(e.getKeyCode() == KeyEvent.VK_DOWN)
@@ -182,13 +197,6 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
             gameLogic.setPendingDirection('L');
         else if(e.getKeyCode() == KeyEvent.VK_RIGHT)
             gameLogic.setPendingDirection('R');
-
-        if(gameState.isGameOver()){
-            loadMap();
-            gameLogic.resetPositions(pacman, ghosts);
-            gameState.reset();
-            gameLoop.start();
-        }
 
         if(!gameLogic.isEating())
             gameLogic.updatePacmanImage(pacman);
@@ -208,7 +216,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener, Mouse
         int imgX = (boardWidth - drawW) / 2;
         int imgY = (boardHeight - drawH) / 2;
 
-        if(isPaused &&
+        if(gameState.isPaused() &&
                 mouseX >= imgX && mouseX <= imgX + drawW &&
                 mouseY >= imgY && mouseY <= imgY + drawH)
         {
